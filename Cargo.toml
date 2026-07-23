@@ -1,0 +1,41 @@
+[package]
+name = "trance-tui"
+version = "0.3.66"
+edition = "2024"
+description = "Optional TUI client for IdleScreen daemon configuration"
+license = "Apache-2.0"
+repository = "https://github.com/idlescreen/idle-tui"
+readme = "README.md"
+
+[dependencies]
+crossterm = "0.29"
+ratatui = "0.30"
+anyhow = "1"
+trance-dbus = { path = "../idle-core/crates/trance-dbus" }
+trance-runner = { path = "../idle-core/trance-runner" }
+
+[package.metadata.deb]
+name = "trance-tui"
+maintainer = "IdleScreen <jerydleuck@gmail.com>"
+copyright = "2026 IdleScreen"
+extended-description = "Optional TUI client for IdleScreen daemon configuration."
+depends = "libc6, trance"
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/trance-tui", "usr/bin/trance-tui", "755"]
+]
+
+[package.metadata.generate-rpm]
+name = "trance-tui"
+release = "1"
+arch = "x86_64"
+summary = "Optional TUI client for IdleScreen daemon configuration"
+description = "Optional TUI client for IdleScreen daemon configuration."
+license = "Apache-2.0"
+assets = [
+    { source = "target/release/trance-tui", dest = "/usr/bin/trance-tui", mode = "755", user = "root", group = "root" }
+]
+
+[package.metadata.generate-rpm.requires]
+trance = "*"
