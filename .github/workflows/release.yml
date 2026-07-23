@@ -1,0 +1,31 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: idle-tui
+      - uses: actions/checkout@v4
+        with:
+          repository: idlescreen/idle-core
+          path: idle-core
+      - uses: dtolnay/rust-toolchain@stable
+      - name: System deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdbus-1-dev pkg-config
+      - name: Build release
+        working-directory: idle-tui
+        run: cargo build --release
+      - name: Upload binary
+        uses: softprops/action-gh-release@v2
+        with:
+          files: idle-tui/target/release/trance-tui
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

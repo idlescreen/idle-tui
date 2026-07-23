@@ -49,3 +49,9 @@ sudo apt install trance-tui
 ## License
 
 Apache-2.0.
+
+## Releases
+
+Tag `vX.Y.Z` on `master`. The Release workflow builds `trance-tui` and attaches
+it to the GitHub Release. Deb/rpm packaging continues to use cargo-deb metadata
+when run from packaging CI.
