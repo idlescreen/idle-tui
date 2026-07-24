@@ -64,11 +64,13 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                 KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                 KeyCode::Tab => {
                     app.active_pane = match app.active_pane {
+                        ActivePane::Dashboard => ActivePane::Settings,
                         ActivePane::Settings => ActivePane::Screensavers,
-                        ActivePane::Screensavers => ActivePane::Settings,
+                        ActivePane::Screensavers => ActivePane::Dashboard,
                     };
                 }
                 KeyCode::Up => match app.active_pane {
+                    ActivePane::Dashboard => {}
                     ActivePane::Settings => {
                         if app.selected_setting_idx > 0 {
                             app.selected_setting_idx -= 1;
@@ -81,6 +83,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                     }
                 },
                 KeyCode::Down => match app.active_pane {
+                    ActivePane::Dashboard => {}
                     ActivePane::Settings => {
                         if app.selected_setting_idx < 4 {
                             app.selected_setting_idx += 1;
@@ -111,6 +114,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                     }
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => match app.active_pane {
+                    ActivePane::Dashboard => {}
                     ActivePane::Settings => match app.selected_setting_idx {
                         0 => app.toggle_daemon(),
                         1 => app.toggle_idle(),
@@ -139,6 +143,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
 
         if last_tick.elapsed() >= tick_rate {
             app.refresh_state();
+            app.tick_count = app.tick_count.wrapping_add(1);
             last_tick = Instant::now();
         }
     }

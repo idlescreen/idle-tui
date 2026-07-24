@@ -7,6 +7,7 @@ use std::time::Duration;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActivePane {
+    Dashboard,
     Settings,
     Screensavers,
 }
@@ -24,6 +25,12 @@ pub struct App {
     pub selected_saver_idx: usize,
     pub active_pane: ActivePane,
     pub selected_setting_idx: usize,
+    pub cpu_usage_pct: f32,
+    pub mem_used_pct: f32,
+    pub mem_used_mb: u64,
+    pub mem_total_mb: u64,
+    pub inhibitors: Vec<(u32, String, String)>,
+    pub tick_count: u64,
 }
 
 impl App {
@@ -39,8 +46,14 @@ impl App {
             on_battery: false,
             screensavers: Vec::new(),
             selected_saver_idx: 0,
-            active_pane: ActivePane::Settings,
+            active_pane: ActivePane::Dashboard,
             selected_setting_idx: 0,
+            cpu_usage_pct: 0.0,
+            mem_used_pct: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            inhibitors: Vec::new(),
+            tick_count: 0,
         };
         app.refresh_state();
         app
@@ -65,6 +78,11 @@ impl App {
                 if let Ok(savers) = client.list_savers() {
                     self.screensavers = savers;
                 }
+                if let Ok(inhibs) = client.list_inhibitors() {
+                    self.inhibitors = inhibs;
+                } else {
+                    self.inhibitors = Vec::new();
+                }
                 self.client = Some(client);
             }
         } else {
@@ -74,6 +92,10 @@ impl App {
 
         let sys = idle_runner::toolkit::sys_info::get_system_info();
         self.on_battery = sys.power_status.contains("Battery");
+        self.cpu_usage_pct = sys.cpu_usage_pct;
+        self.mem_used_pct = sys.mem_used_pct;
+        self.mem_used_mb = sys.mem_used_mb;
+        self.mem_total_mb = sys.mem_total_mb;
     }
 
     pub fn toggle_daemon(&mut self) {

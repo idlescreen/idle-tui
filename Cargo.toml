@@ -1,6 +1,6 @@
 [package]
 name = "idle-tui"
-version = "2.1.1"
+version = "2.2.0"
 edition = "2024"
 description = "Optional TUI client for IdleScreen (idle-tui)"
 license = "Apache-2.0"
@@ -28,8 +28,8 @@ path = "src/main.rs"
 crossterm = "0.29"
 ratatui = "0.30"
 anyhow = "1"
-idle-dbus = { path = "idle/crates/idle-dbus" }
-idle-runner = { path = "idle/idle-runner" }
+idle-dbus = { path = "../idle/crates/idle-dbus" }
+idle-runner = { path = "../idle/idle-runner" }
 
 [package.metadata.deb]
 name = "idle-tui"
