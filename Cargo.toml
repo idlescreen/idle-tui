@@ -12,18 +12,6 @@ publish = false
 name = "idle-tui"
 path = "src/main.rs"
 
-[[bin]]
-name = "app-tui"
-path = "src/main.rs"
-
-[[bin]]
-name = "idlescreen-tui"
-path = "src/main.rs"
-
-[[bin]]
-name = "trance-tui"
-path = "src/main.rs"
-
 [dependencies]
 crossterm = "0.29"
 ratatui = "0.30"
@@ -46,7 +34,8 @@ assets = [
     ["target/release/idle-tui", "usr/bin/idle-tui", "755"],
     ["target/release/app-tui", "usr/bin/app-tui", "755"],
     ["target/release/idlescreen-tui", "usr/bin/idlescreen-tui", "755"],
-    ["target/release/trance-tui", "usr/bin/trance-tui", "755"]
+    ["target/release/trance-tui", "usr/bin/trance-tui", "755"],
+    ["assets/io.github.idlescreen.tui.desktop", "usr/share/applications/io.github.idlescreen.tui.desktop", "644"]
 ]
 
 [package.metadata.generate-rpm]
@@ -60,7 +49,8 @@ assets = [
     { source = "target/release/idle-tui", dest = "/usr/bin/idle-tui", mode = "755" },
     { source = "target/release/app-tui", dest = "/usr/bin/app-tui", mode = "755" },
     { source = "target/release/idlescreen-tui", dest = "/usr/bin/idlescreen-tui", mode = "755" },
-    { source = "target/release/trance-tui", dest = "/usr/bin/trance-tui", mode = "755" }
+    { source = "target/release/trance-tui", dest = "/usr/bin/trance-tui", mode = "755" },
+    { source = "assets/io.github.idlescreen.tui.desktop", dest = "/usr/share/applications/io.github.idlescreen.tui.desktop", mode = "644" }
 ]
 
 [package.metadata.generate-rpm.requires]

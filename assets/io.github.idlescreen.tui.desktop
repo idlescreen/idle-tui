@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=IdleScreen
+GenericName=Screensaver & Host Controller
+Comment=IdleScreen screensaver settings and live TUI host
+Exec=idlescreen tui
+Icon=preferences-desktop-screensaver
+Terminal=true
+Type=Application
+Categories=Utility;Settings;DesktopSettings;
+Keywords=screensaver;idle;tui;cosmic;wayland;
