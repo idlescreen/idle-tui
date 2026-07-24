@@ -1,57 +1,29 @@
-# idle-tui
+# app-tui
 
 Optional terminal UI for controlling the [IdleScreen](https://github.com/idlescreen/idle-core)
 daemon (effect selection, enable/disable, status).
 
-This is an **engine/frontend**, not a platform app. Platform products
+This is a **controller app** (`app-*`), not the core daemon. Platform products
 (`app-cosmic`, etc.) may Recommend this package.
-
-## Status
-
-Extracted from `idle-core`. Binary and Debian package name remain **`trance-tui`**
-for install continuity.
-
-## Build
-
-Requires a sibling checkout of `idle-core` (path dependencies):
-
-```bash
-git clone https://github.com/idlescreen/idle-core.git
-git clone https://github.com/idlescreen/idle-tui.git
-cd idle-tui
-cargo build --release
-```
-
-## Run
-
-```bash
-# daemon must be available on D-Bus
-trance-tui
-```
 
 ## Install
 
-After adding the [packages](https://idlescreen.github.io/packages/) apt/dnf source:
-
 ```bash
-sudo apt install trance-tui
-# or: sudo dnf install trance-tui
+sudo dnf install app-tui
+# binaries: app-tui (also idlescreen-tui / trance-tui for upgrades)
 ```
 
-## Related
+## Build
 
-| Repo | Role |
-|------|------|
-| [idle-core](https://github.com/idlescreen/idle-core) | Daemon + CLI |
-| [app-cosmic](https://github.com/idlescreen/app-cosmic) | COSMIC app |
-| [packages](https://github.com/idlescreen/packages) | Package host |
+Requires a sibling checkout of idle-core (path dependencies):
+
+```bash
+git clone https://github.com/idlescreen/idle-core.git
+git clone https://github.com/idlescreen/app-tui.git
+cd app-tui
+cargo build --release
+```
 
 ## License
 
 Apache-2.0.
-
-## Releases
-
-Tag `vX.Y.Z` on `master`. The Release workflow builds `trance-tui` and attaches
-it to the GitHub Release. Deb/rpm packaging continues to use cargo-deb metadata
-when run from packaging CI.

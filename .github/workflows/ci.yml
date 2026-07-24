@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          path: idle-tui
+          path: app-tui
       - name: Checkout idle-core (path deps)
         uses: actions/checkout@v4
         with:
@@ -24,11 +24,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libdbus-1-dev pkg-config
       - name: fmt
-        working-directory: idle-tui
+        working-directory: app-tui
         run: cargo fmt --all -- --check
       - name: clippy
-        working-directory: idle-tui
+        working-directory: app-tui
         run: cargo clippy --all-targets -- -D warnings
       - name: test
-        working-directory: idle-tui
+        working-directory: app-tui
         run: cargo test

@@ -1,4 +1,4 @@
-# AGENT.md — idle-tui (Phase B contract)
+# AGENT.md — app-tui (Phase B contract)
 
 - Strict Rust, Apache-2.0.
 - Max 250 lines per `.rs` file.
