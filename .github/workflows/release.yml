@@ -9,23 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout idle engine (path deps)
+        uses: actions/checkout@v4
         with:
-          path: app-tui
-      - uses: actions/checkout@v4
-        with:
-          repository: idlescreen/idle-core
-          path: idle-core
+          repository: idlescreen/idle
+          path: idle
       - uses: dtolnay/rust-toolchain@stable
       - name: System deps
         run: |
           sudo apt-get update
           sudo apt-get install -y libdbus-1-dev pkg-config
       - name: Build release
-        working-directory: app-tui
         run: cargo build --release
       - name: Upload binary
         uses: softprops/action-gh-release@v2
         with:
-          files: app-tui/target/release/trance-tui
+          files: |
+            target/release/idle-tui
+            target/release/trance-tui
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

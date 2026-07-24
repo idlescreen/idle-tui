@@ -9,13 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: app-tui
-      - name: Checkout idle-core (path deps)
+      - name: Checkout idle engine (path deps)
         uses: actions/checkout@v4
         with:
-          repository: idlescreen/idle-core
-          path: idle-core
+          repository: idlescreen/idle
+          path: idle
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -24,11 +22,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libdbus-1-dev pkg-config
       - name: fmt
-        working-directory: app-tui
         run: cargo fmt --all -- --check
       - name: clippy
-        working-directory: app-tui
         run: cargo clippy --all-targets -- -D warnings
       - name: test
-        working-directory: app-tui
         run: cargo test
