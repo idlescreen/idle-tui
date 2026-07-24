@@ -3,7 +3,7 @@
 
 use std::process::Command;
 use std::time::Duration;
-use trance_dbus::{TranceClient, daemon_available};
+use idle_dbus::{TranceClient, daemon_available};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActivePane {
@@ -69,25 +69,25 @@ impl App {
             }
         } else {
             self.client = None;
-            self.screensavers = trance_runner::discovery::detect_screensavers();
+            self.screensavers = idle_runner::discovery::detect_screensavers();
         }
 
-        let sys = trance_runner::toolkit::sys_info::get_system_info();
+        let sys = idle_runner::toolkit::sys_info::get_system_info();
         self.on_battery = sys.power_status.contains("Battery");
     }
 
     pub fn toggle_daemon(&mut self) {
         if self.daemon_running {
             let _ = Command::new("systemctl")
-                .args(["--user", "stop", "trance-daemon.service"])
+                .args(["--user", "stop", "idle-daemon.service"])
                 .status();
         } else {
             let sys_status = Command::new("systemctl")
-                .args(["--user", "enable", "--now", "trance-daemon.service"])
+                .args(["--user", "enable", "--now", "idle-daemon.service"])
                 .status();
             let success = sys_status.map(|s| s.success()).unwrap_or(false);
             if !success {
-                let _ = Command::new("trance-daemon").arg("daemon").spawn();
+                let _ = Command::new("idle-daemon").arg("daemon").spawn();
             }
         }
         std::thread::sleep(Duration::from_millis(350));
@@ -169,7 +169,7 @@ impl App {
             }
         }
         if !started_via_dbus {
-            let _ = Command::new("trance-daemon")
+            let _ = Command::new("idle-daemon")
                 .args(["run-plugin", &saver])
                 .status();
         }
