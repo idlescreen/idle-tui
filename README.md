@@ -1,13 +1,12 @@
 # idle-tui
 
-Optional live terminal UI for [IdleScreen](https://github.com/idlescreen/idle-core).
+Optional live TUI for IdleScreen.
 
 ```bash
 sudo dnf install idle-tui
-idle-tui
 ```
 
-Depends on package **`idle`** (daemon).
+Depends on **`idle-daemon`** (pulled automatically). Engine source: [idle](https://github.com/idlescreen/idle).
 
 ## License
 

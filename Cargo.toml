@@ -28,15 +28,15 @@ path = "src/main.rs"
 crossterm = "0.29"
 ratatui = "0.30"
 anyhow = "1"
-trance-dbus = { path = "../idle-core/crates/trance-dbus" }
-trance-runner = { path = "../idle-core/trance-runner" }
+trance-dbus = { path = "../idle/crates/trance-dbus" }
+trance-runner = { path = "../idle/trance-runner" }
 
 [package.metadata.deb]
 name = "idle-tui"
 copyright = "2026 IdleScreen"
 maintainer = "IdleScreen <jerydleuck@gmail.com>"
 extended-description = "Optional live TUI controller for IdleScreen."
-depends = "libc6, idle"
+depends = "libc6, idle-daemon"
 provides = "app-tui, idlescreen-tui, trance-tui"
 replaces = "app-tui, idlescreen-tui, trance-tui"
 conflicts = "app-tui (<< 2.1.0), idlescreen-tui (<< 2.1.0), trance-tui (<< 2.0.0)"
@@ -64,7 +64,7 @@ assets = [
 ]
 
 [package.metadata.generate-rpm.requires]
-idle = "*"
+idle-daemon = "*"
 
 [package.metadata.generate-rpm.provides]
 app-tui = "*"
