@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 IdleScreen
 
+use idle_dbus::{TranceClient, daemon_available};
 use std::process::Command;
 use std::time::Duration;
-use idle_dbus::{TranceClient, daemon_available};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActivePane {
