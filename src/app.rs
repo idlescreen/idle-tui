@@ -31,9 +31,31 @@ pub struct App {
     pub mem_total_mb: u64,
     pub inhibitors: Vec<(u32, String, String)>,
     pub tick_count: u64,
+    pub cosmic_de_detected: bool,
+    pub cosmic_applet_installed: bool,
+    pub status_message: Option<String>,
 }
 
 impl App {
+    pub fn is_cosmic_de() -> bool {
+        if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
+            if desktop.to_lowercase().contains("cosmic") {
+                return true;
+            }
+        }
+        if let Ok(session) = std::env::var("DESKTOP_SESSION") {
+            if session.to_lowercase().contains("cosmic") {
+                return true;
+            }
+        }
+        std::path::Path::new("/usr/bin/cosmic-panel").exists()
+    }
+
+    pub fn is_cosmic_applet_installed() -> bool {
+        std::path::Path::new("/usr/bin/idlescreen-applet").exists()
+            || std::path::Path::new("/usr/bin/trance-applet").exists()
+    }
+
     pub fn new() -> Self {
         let mut app = Self {
             client: None,
@@ -54,9 +76,43 @@ impl App {
             mem_total_mb: 0,
             inhibitors: Vec::new(),
             tick_count: 0,
+            cosmic_de_detected: Self::is_cosmic_de(),
+            cosmic_applet_installed: Self::is_cosmic_applet_installed(),
+            status_message: None,
         };
         app.refresh_state();
         app
+    }
+
+    pub fn install_cosmic_applet(&mut self) {
+        self.status_message = Some("Installing idle-cosmic package...".to_string());
+        let has_dnf = std::path::Path::new("/usr/bin/dnf").exists();
+        let has_apt = std::path::Path::new("/usr/bin/apt").exists();
+        let status = if has_dnf {
+            Command::new("pkexec")
+                .args(["dnf", "install", "-y", "idle-cosmic"])
+                .status()
+        } else if has_apt {
+            Command::new("pkexec")
+                .args(["apt", "install", "-y", "idle-cosmic"])
+                .status()
+        } else {
+            self.status_message = Some("Error: No supported package manager (dnf/apt)".to_string());
+            return;
+        };
+
+        match status {
+            Ok(s) if s.success() => {
+                self.cosmic_applet_installed = Self::is_cosmic_applet_installed();
+                self.status_message = Some("idle-cosmic installed successfully!".to_string());
+            }
+            Ok(s) => {
+                self.status_message = Some(format!("Installation exited with status: {s}"));
+            }
+            Err(e) => {
+                self.status_message = Some(format!("Failed to run installer: {e}"));
+            }
+        }
     }
 
     pub fn refresh_state(&mut self) {

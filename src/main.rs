@@ -129,6 +129,11 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                         }
                     }
                 },
+                KeyCode::Char('c') => {
+                    if app.cosmic_de_detected && !app.cosmic_applet_installed {
+                        app.install_cosmic_applet();
+                    }
+                }
                 KeyCode::Char('p') => {
                     if app.active_pane == ActivePane::Screensavers {
                         app.preview_saver();

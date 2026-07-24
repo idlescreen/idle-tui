@@ -51,10 +51,20 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
     } else {
         " · daemon stopped (Space on Daemon starts + enables)".dark_gray()
     };
+    let cosmic_hint = if app.cosmic_de_detected {
+        if app.cosmic_applet_installed {
+            " · 🪐 COSMIC Applet Installed".magenta()
+        } else {
+            " · 🪐 COSMIC DE detected (Press [c] to install Applet)".magenta().bold()
+        }
+    } else {
+        "".into()
+    };
     let title = Line::from(vec![
-        " Trance Screensaver ".cyan().bold(),
+        " IdleScreen ".cyan().bold(),
         battery_status,
         daemon_hint,
+        cosmic_hint,
     ]);
     let title_block = Block::default()
         .borders(Borders::ALL)
@@ -151,14 +161,25 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
 
     f.render_stateful_widget(savers_widget, columns[1], &mut state);
 
-    let help_text = match app.active_pane {
-        ActivePane::Settings => {
-            " [Tab] Pane | [Space/Enter] Toggle | [←/→] Timeout/Scale | [q] Quit  ·  Daemon on = enable --now"
-        }
-        ActivePane::Screensavers => {
-            " [Tab] Pane | [↑/↓] Navigate | [Enter] Set Active | [p] Preview | [q] Quit"
+    let cosmic_key_hint = if app.cosmic_de_detected && !app.cosmic_applet_installed {
+        " | [c] Install COSMIC Applet"
+    } else {
+        ""
+    };
+
+    let help_text = if let Some(ref msg) = app.status_message {
+        msg.clone()
+    } else {
+        match app.active_pane {
+            ActivePane::Settings => {
+                format!(" [Tab] Pane | [Space/Enter] Toggle | [←/→] Timeout/Scale{cosmic_key_hint} | [q] Quit")
+            }
+            ActivePane::Screensavers => {
+                format!(" [Tab] Pane | [↑/↓] Navigate | [Enter] Set Active | [p] Preview{cosmic_key_hint} | [q] Quit")
+            }
         }
     };
+
     let help_block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray));
