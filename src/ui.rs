@@ -55,7 +55,9 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
         if app.cosmic_applet_installed {
             " · 🪐 COSMIC Applet Installed".magenta()
         } else {
-            " · 🪐 COSMIC DE detected (Press [c] to install Applet)".magenta().bold()
+            " · 🪐 COSMIC DE detected (Press [c] to install Applet)"
+                .magenta()
+                .bold()
         }
     } else {
         "".into()
@@ -175,10 +177,14 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
                 format!(" [Tab] Pane | [Space] Toggle Service{cosmic_key_hint} | [q] Quit")
             }
             ActivePane::Settings => {
-                format!(" [Tab] Pane | [Space/Enter] Toggle | [←/→] Timeout/Scale{cosmic_key_hint} | [q] Quit")
+                format!(
+                    " [Tab] Pane | [Space/Enter] Toggle | [←/→] Timeout/Scale{cosmic_key_hint} | [q] Quit"
+                )
             }
             ActivePane::Screensavers => {
-                format!(" [Tab] Pane | [↑/↓] Navigate | [Enter] Set Active | [p] Preview{cosmic_key_hint} | [q] Quit")
+                format!(
+                    " [Tab] Pane | [↑/↓] Navigate | [Enter] Set Active | [p] Preview{cosmic_key_hint} | [q] Quit"
+                )
             }
         }
     };
