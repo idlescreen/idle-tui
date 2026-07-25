@@ -1,21 +1,26 @@
 # idle-tui
 
-Universal terminal UI controller for IdleScreen.
+Terminal UI client for IdleScreen. Talks to `idle-daemon` over D-Bus.
 
-🌐 **Website & Installation:** [https://idlescreen.github.io](https://idlescreen.github.io)
+Website: [https://idlescreen.github.io](https://idlescreen.github.io)
 
-### Launcher Command
+### Launch
 
 ```bash
-idlescreen tui    # (or idle-tui)
+idlescreen tui    # preferred (from idle-cli)
+idle-tui          # direct binary
 ```
+
+Package: `idle-tui` (included by the main install script).
 
 ### Keybindings
 
 | Key | Action |
 |-----|--------|
-| `Tab` / `Shift+Tab` | Switch between Dashboard, Savers, and Settings panes |
-| `Space` | Toggle screensaver engine On / Off |
-| `Enter` | Trigger screensaver immediately |
-| `c` | 1-Click install COSMIC DE panel applet (COSMIC DE only) |
-| `q` | Quit TUI |
+| `Tab` | Switch panes (Dashboard / Savers / Settings) |
+| `Space` / `Enter` | Toggle service or activate (depends on pane) |
+| `↑` / `↓` | Navigate lists |
+| `←` / `→` | Adjust timeout / scale on Dashboard where shown |
+| `p` | Preview selected saver (Savers pane) |
+| `c` | Install `idle-cosmic` when COSMIC is detected and the applet is missing |
+| `q` / `Esc` | Quit |
