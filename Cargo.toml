@@ -1,6 +1,6 @@
 [package]
 name = "idle-tui"
-version = "2.2.1"
+version = "2.3.0"
 edition = "2024"
 description = "Optional TUI client for IdleScreen (idle-tui)"
 license = "Apache-2.0"
@@ -16,6 +16,7 @@ path = "src/main.rs"
 crossterm = "0.29"
 ratatui = "0.30"
 anyhow = "1"
+# Local path dep: CI checks out idlescreen/idle here; local may be a symlink to ../idle
 idle-dbus = { path = "idle/crates/idle-dbus" }
 idle-runner = { path = "idle/idle-runner" }
 
@@ -32,9 +33,6 @@ section = "utils"
 priority = "optional"
 assets = [
     ["target/release/idle-tui", "usr/bin/idle-tui", "755"],
-    ["target/release/idle-tui", "usr/bin/app-tui", "755"],
-    ["target/release/idle-tui", "usr/bin/idlescreen-tui", "755"],
-    ["target/release/idle-tui", "usr/bin/trance-tui", "755"],
     ["assets/io.github.idlescreen.tui.desktop", "usr/share/applications/io.github.idlescreen.tui.desktop", "644"]
 ]
 
@@ -47,9 +45,6 @@ description = "Optional live TUI controller for IdleScreen."
 license = "Apache-2.0"
 assets = [
     { source = "target/release/idle-tui", dest = "/usr/bin/idle-tui", mode = "755" },
-    { source = "target/release/idle-tui", dest = "/usr/bin/app-tui", mode = "755" },
-    { source = "target/release/idle-tui", dest = "/usr/bin/idlescreen-tui", mode = "755" },
-    { source = "target/release/idle-tui", dest = "/usr/bin/trance-tui", mode = "755" },
     { source = "assets/io.github.idlescreen.tui.desktop", dest = "/usr/share/applications/io.github.idlescreen.tui.desktop", mode = "644" }
 ]
 

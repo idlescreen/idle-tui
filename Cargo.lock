@@ -876,7 +876,7 @@ dependencies = [
 
 [[package]]
 name = "idle-dbus"
-version = "0.4.1"
+version = "0.6.0"
 dependencies = [
  "tracing",
  "zbus",
@@ -905,7 +905,7 @@ dependencies = [
 
 [[package]]
 name = "idle-tui"
-version = "2.2.1"
+version = "2.3.0"
 dependencies = [
  "anyhow",
  "crossterm",

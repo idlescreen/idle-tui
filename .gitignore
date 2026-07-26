@@ -1,5 +1,6 @@
 Cargo.lock.bak
+/idle
+/idle/
 **/*.rs.bk
 /target
 target/
-/idle/
