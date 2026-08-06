@@ -90,7 +90,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                         }
                     }
                     ActivePane::Screensavers => {
-                        if app.selected_saver_idx <= app.screensavers.len() {
+                        if app.selected_saver_idx < app.screensavers.len() {
                             app.selected_saver_idx += 1;
                         }
                     }
