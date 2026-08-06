@@ -3,7 +3,7 @@
 
 use idle_dbus::{TranceClient, daemon_available};
 use std::process::Command;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActivePane {
@@ -34,6 +34,7 @@ pub struct App {
     pub cosmic_de_detected: bool,
     pub cosmic_applet_installed: bool,
     pub status_message: Option<String>,
+    pub last_action: Option<Instant>,
 }
 
 impl App {
@@ -79,6 +80,7 @@ impl App {
             cosmic_de_detected: Self::is_cosmic_de(),
             cosmic_applet_installed: Self::is_cosmic_applet_installed(),
             status_message: None,
+            last_action: None,
         };
         app.refresh_state();
         app
@@ -116,6 +118,22 @@ impl App {
     }
 
     pub fn refresh_state(&mut self) {
+        if let Some(action_time) = self.last_action {
+            if action_time.elapsed() < Duration::from_millis(600) {
+                let sys = idle_runner::toolkit::sys_info::get_system_info();
+                self.cpu_usage_pct = sys.cpu_usage_pct;
+                self.mem_used_pct = sys.mem_used_pct;
+                self.mem_used_mb = sys.mem_used_mb;
+                self.mem_total_mb = sys.mem_total_mb;
+                if self.selected_saver_idx > self.screensavers.len() {
+                    self.selected_saver_idx = self.screensavers.len();
+                }
+                return;
+            } else {
+                self.last_action = None;
+            }
+        }
+
         self.daemon_running = daemon_available();
         if self.daemon_running {
             if let Ok(client) = TranceClient::connect() {
@@ -152,6 +170,10 @@ impl App {
         self.mem_used_pct = sys.mem_used_pct;
         self.mem_used_mb = sys.mem_used_mb;
         self.mem_total_mb = sys.mem_total_mb;
+
+        if self.selected_saver_idx > self.screensavers.len() {
+            self.selected_saver_idx = self.screensavers.len();
+        }
     }
 
     pub fn toggle_daemon(&mut self) {
@@ -180,7 +202,8 @@ impl App {
                 let _ = client.enable();
             }
         }
-        self.refresh_state();
+        self.idle_enabled = !self.idle_enabled;
+        self.last_action = Some(Instant::now());
     }
 
     pub fn adjust_timeout(&mut self, delta: i32) {
@@ -190,6 +213,7 @@ impl App {
         if let Some(ref client) = self.client {
             let _ = client.set_timeout(self.idle_timeout_mins);
         }
+        self.last_action = Some(Instant::now());
     }
 
     pub fn adjust_scale(&mut self, delta: f32) {
@@ -199,13 +223,15 @@ impl App {
         if let Some(ref client) = self.client {
             let _ = client.set_render_scale(self.render_scale);
         }
+        self.last_action = Some(Instant::now());
     }
 
     pub fn toggle_fps(&mut self) {
         if let Some(ref client) = self.client {
             let _ = client.set_show_fps_overlay(!self.show_fps_overlay);
         }
-        self.refresh_state();
+        self.show_fps_overlay = !self.show_fps_overlay;
+        self.last_action = Some(Instant::now());
     }
 
     pub fn select_saver(&mut self) {
@@ -216,8 +242,9 @@ impl App {
                 &self.screensavers[self.selected_saver_idx - 1]
             };
             let _ = client.set_saver(name);
+            self.active_saver = if name.is_empty() { "Random".to_string() } else { name.to_string() };
         }
-        self.refresh_state();
+        self.last_action = Some(Instant::now());
     }
 
     pub fn preview_saver(&mut self) {
