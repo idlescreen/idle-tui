@@ -9,9 +9,19 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
 };
 
+/// True when the active saver is "pick at idle time" (random / empty / shuffle).
+pub fn is_random_saver(raw: &str) -> bool {
+    let t = raw.trim();
+    t.is_empty()
+        || t.eq_ignore_ascii_case("random")
+        || t.eq_ignore_ascii_case("shuffle")
+        || t == "Random"
+        || t == "Random selection"
+}
+
 pub fn display_saver_name(raw: &str) -> String {
-    if raw.eq_ignore_ascii_case("random") || raw == "Random selection" {
-        return raw.to_string();
+    if is_random_saver(raw) {
+        return "Random".to_string();
     }
     let mut out = String::with_capacity(raw.len());
     let mut cap = true;
@@ -125,17 +135,19 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
     let settings_widget = List::new(settings_items).block(settings_block);
     f.render_widget(settings_widget, columns[0]);
 
+    let random_active = is_random_saver(&app.active_saver);
     let mut saver_items = vec![ListItem::new(format!(
         "{} Random",
-        if app.active_saver == "Random" {
-            "*"
-        } else {
-            " "
-        }
+        if random_active { "*" } else { " " }
     ))];
 
     for s in &app.screensavers {
-        let prefix = if app.active_saver == *s { "*" } else { " " };
+        // Never star a named saver while random is active (empty / "random" / "shuffle").
+        let prefix = if !random_active && app.active_saver == *s {
+            "*"
+        } else {
+            " "
+        };
         saver_items.push(ListItem::new(format!("{prefix} {}", display_saver_name(s))));
     }
 
@@ -194,4 +206,19 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
         .border_style(Style::default().fg(Color::DarkGray));
     let help_paragraph = Paragraph::new(help_text).block(help_block);
     f.render_widget(help_paragraph, chunks[2]);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn random_aliases_are_detected() {
+        for raw in ["", "random", "Random", "RANDOM", "shuffle", "Shuffle", "Random selection"] {
+            assert!(is_random_saver(raw), "expected random for {raw:?}");
+            assert_eq!(display_saver_name(raw), "Random");
+        }
+        assert!(!is_random_saver("beams"));
+        assert_eq!(display_saver_name("beams"), "Beams");
+    }
 }

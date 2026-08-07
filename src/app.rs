@@ -106,14 +106,44 @@ impl App {
     }
 
     pub fn select_saver(&mut self) {
-        if let Some(ref client) = self.client {
-            let name = if self.selected_saver_idx == 0 {
-                ""
+        // Ensure we have a live D-Bus client (start daemon if needed).
+        if self.client.is_none() {
+            if !self.daemon_running {
+                self.toggle_daemon();
             } else {
-                &self.screensavers[self.selected_saver_idx - 1]
-            };
-            let _ = client.set_saver(name);
-            self.active_saver = if name.is_empty() { "Random".to_string() } else { name.to_string() };
+                self.refresh_state();
+            }
+        }
+        let name = if self.selected_saver_idx == 0 {
+            // Empty string is the daemon wire value for random (see SetSaver).
+            String::new()
+        } else if self.selected_saver_idx - 1 < self.screensavers.len() {
+            self.screensavers[self.selected_saver_idx - 1].clone()
+        } else {
+            return;
+        };
+
+        if let Some(ref client) = self.client {
+            match client.set_saver(&name) {
+                Ok(()) => {
+                    self.active_saver = if name.is_empty() {
+                        "Random".to_string()
+                    } else {
+                        name
+                    };
+                    self.status_message = Some(if self.active_saver == "Random" {
+                        "Saver: Random (pick at idle)".into()
+                    } else {
+                        format!("Saver: {}", self.active_saver)
+                    });
+                }
+                Err(e) => {
+                    self.status_message = Some(format!("Failed to set saver: {e}"));
+                }
+            }
+        } else {
+            self.status_message =
+                Some("Daemon not running — start it (Settings → Daemon) first".into());
         }
         self.last_action = Some(Instant::now());
     }

@@ -1,6 +1,6 @@
 [package]
 name = "idle-tui"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2024"
 description = "Optional TUI client for IdleScreen (idle-tui)"
 license = "Apache-2.0"
@@ -38,7 +38,7 @@ assets = [
 
 [package.metadata.generate-rpm]
 name = "idle-tui"
-release = "2"
+release = "1"
 arch = "x86_64"
 summary = "IdleScreen live TUI (idle-tui)"
 description = "Optional live TUI controller for IdleScreen."

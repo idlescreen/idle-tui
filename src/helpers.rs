@@ -64,7 +64,8 @@ impl App {
         if let Ok(status) = client.get_status() {
             self.idle_enabled = status.idle_enabled;
             self.idle_timeout_mins = status.idle_timeout_mins;
-            self.active_saver = if status.active_saver.is_empty() {
+            // Normalize empty / random / shuffle to "Random" for UI starring.
+            self.active_saver = if crate::ui::is_random_saver(&status.active_saver) {
                 "Random".to_string()
             } else {
                 status.active_saver
