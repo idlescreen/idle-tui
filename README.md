@@ -11,7 +11,7 @@ idlescreen tui    # preferred (from idle-cli)
 idle-tui          # direct binary
 ```
 
-Package: `idle-tui` (included by the main install script).
+Package: `idle-tui` (pulled in by the `idlescreen` metapackage / main install script).
 
 ### Keybindings
 
