@@ -6,7 +6,7 @@ use super::*;
 #[test]
 fn test_app_initial_state() {
     let app = App::new();
-    assert_eq!(app.active_pane, ActivePane::Settings);
+    assert_eq!(app.active_pane, ActivePane::Dashboard);
     assert_eq!(app.selected_setting_idx, 0);
     assert_eq!(app.selected_saver_idx, 0);
     assert!(app.idle_timeout_mins >= 1 && app.idle_timeout_mins <= 240);
@@ -48,17 +48,19 @@ fn test_adjust_scale_clamping() {
 #[test]
 fn test_active_pane_toggle() {
     let mut app = App::new();
-    assert_eq!(app.active_pane, ActivePane::Settings);
+    assert_eq!(app.active_pane, ActivePane::Dashboard);
 
     app.active_pane = match app.active_pane {
-        ActivePane::Settings => ActivePane::Screensavers,
-        ActivePane::Screensavers => ActivePane::Settings,
+        ActivePane::Dashboard => ActivePane::Screensavers,
+        ActivePane::Screensavers => ActivePane::Dashboard,
+        _ => ActivePane::Dashboard,
     };
     assert_eq!(app.active_pane, ActivePane::Screensavers);
 
     app.active_pane = match app.active_pane {
-        ActivePane::Settings => ActivePane::Screensavers,
-        ActivePane::Screensavers => ActivePane::Settings,
+        ActivePane::Dashboard => ActivePane::Screensavers,
+        ActivePane::Screensavers => ActivePane::Dashboard,
+        _ => ActivePane::Dashboard,
     };
-    assert_eq!(app.active_pane, ActivePane::Settings);
+    assert_eq!(app.active_pane, ActivePane::Dashboard);
 }

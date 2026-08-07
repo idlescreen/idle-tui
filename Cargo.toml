@@ -1,6 +1,6 @@
 [package]
 name = "idle-tui"
-version = "2.3.3"
+version = "3.0.0"
 edition = "2024"
 description = "Optional TUI client for IdleScreen (idle-tui)"
 license = "Apache-2.0"

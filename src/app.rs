@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 IdleScreen
 
-use idle_dbus::{TranceClient, daemon_available};
-use std::process::Command;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ActivePane {
@@ -13,7 +11,7 @@ pub enum ActivePane {
 }
 
 pub struct App {
-    pub client: Option<TranceClient>,
+    pub client: Option<idle_dbus::TranceClient>,
     pub daemon_running: bool,
     pub idle_enabled: bool,
     pub idle_timeout_mins: u32,
@@ -38,25 +36,6 @@ pub struct App {
 }
 
 impl App {
-    pub fn is_cosmic_de() -> bool {
-        if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
-            if desktop.to_lowercase().contains("cosmic") {
-                return true;
-            }
-        }
-        if let Ok(session) = std::env::var("DESKTOP_SESSION") {
-            if session.to_lowercase().contains("cosmic") {
-                return true;
-            }
-        }
-        std::path::Path::new("/usr/bin/cosmic-panel").exists()
-    }
-
-    pub fn is_cosmic_applet_installed() -> bool {
-        std::path::Path::new("/usr/bin/idlescreen-applet").exists()
-            || std::path::Path::new("/usr/bin/trance-applet").exists()
-    }
-
     pub fn new() -> Self {
         let mut app = Self {
             client: None,
@@ -77,121 +56,13 @@ impl App {
             mem_total_mb: 0,
             inhibitors: Vec::new(),
             tick_count: 0,
-            cosmic_de_detected: Self::is_cosmic_de(),
-            cosmic_applet_installed: Self::is_cosmic_applet_installed(),
+            cosmic_de_detected: crate::cosmic::is_cosmic_de(),
+            cosmic_applet_installed: crate::cosmic::is_cosmic_applet_installed(),
             status_message: None,
             last_action: None,
         };
         app.refresh_state();
         app
-    }
-
-    pub fn install_cosmic_applet(&mut self) {
-        self.status_message = Some("Installing idle-cosmic package...".to_string());
-        let has_dnf = std::path::Path::new("/usr/bin/dnf").exists();
-        let has_apt = std::path::Path::new("/usr/bin/apt").exists();
-        let status = if has_dnf {
-            Command::new("pkexec")
-                .args(["dnf", "install", "-y", "idle-cosmic"])
-                .status()
-        } else if has_apt {
-            Command::new("pkexec")
-                .args(["apt", "install", "-y", "idle-cosmic"])
-                .status()
-        } else {
-            self.status_message = Some("Error: No supported package manager (dnf/apt)".to_string());
-            return;
-        };
-
-        match status {
-            Ok(s) if s.success() => {
-                self.cosmic_applet_installed = Self::is_cosmic_applet_installed();
-                self.status_message = Some("idle-cosmic installed successfully!".to_string());
-            }
-            Ok(s) => {
-                self.status_message = Some(format!("Installation exited with status: {s}"));
-            }
-            Err(e) => {
-                self.status_message = Some(format!("Failed to run installer: {e}"));
-            }
-        }
-    }
-
-    pub fn refresh_state(&mut self) {
-        if let Some(action_time) = self.last_action {
-            if action_time.elapsed() < Duration::from_millis(600) {
-                let sys = idle_runner::toolkit::sys_info::get_system_info();
-                self.cpu_usage_pct = sys.cpu_usage_pct;
-                self.mem_used_pct = sys.mem_used_pct;
-                self.mem_used_mb = sys.mem_used_mb;
-                self.mem_total_mb = sys.mem_total_mb;
-                if self.selected_saver_idx > self.screensavers.len() {
-                    self.selected_saver_idx = self.screensavers.len();
-                }
-                return;
-            } else {
-                self.last_action = None;
-            }
-        }
-
-        self.daemon_running = daemon_available();
-        if self.daemon_running {
-            if let Ok(client) = TranceClient::connect() {
-                if let Ok(status) = client.get_status() {
-                    self.idle_enabled = status.idle_enabled;
-                    self.idle_timeout_mins = status.idle_timeout_mins;
-                    self.active_saver = if status.active_saver.is_empty() {
-                        "Random".to_string()
-                    } else {
-                        status.active_saver
-                    };
-                    self.show_fps_overlay = status.show_fps_overlay;
-                    self.render_scale = status.render_scale.parse::<f32>().unwrap_or(1.0);
-                    self.on_battery = status.inhibited;
-                }
-                if let Ok(savers) = client.list_savers() {
-                    self.screensavers = savers;
-                }
-                if let Ok(inhibs) = client.list_inhibitors() {
-                    self.inhibitors = inhibs;
-                } else {
-                    self.inhibitors = Vec::new();
-                }
-                self.client = Some(client);
-            }
-        } else {
-            self.client = None;
-            self.screensavers = idle_runner::discovery::detect_screensavers();
-        }
-
-        let sys = idle_runner::toolkit::sys_info::get_system_info();
-        self.on_battery = sys.power_status.contains("Battery");
-        self.cpu_usage_pct = sys.cpu_usage_pct;
-        self.mem_used_pct = sys.mem_used_pct;
-        self.mem_used_mb = sys.mem_used_mb;
-        self.mem_total_mb = sys.mem_total_mb;
-
-        if self.selected_saver_idx > self.screensavers.len() {
-            self.selected_saver_idx = self.screensavers.len();
-        }
-    }
-
-    pub fn toggle_daemon(&mut self) {
-        if self.daemon_running {
-            let _ = Command::new("systemctl")
-                .args(["--user", "stop", "idle-daemon.service"])
-                .status();
-        } else {
-            let sys_status = Command::new("systemctl")
-                .args(["--user", "enable", "--now", "idle-daemon.service"])
-                .status();
-            let success = sys_status.map(|s| s.success()).unwrap_or(false);
-            if !success {
-                let _ = Command::new("idle-daemon").arg("daemon").spawn();
-            }
-        }
-        std::thread::sleep(Duration::from_millis(350));
-        self.refresh_state();
     }
 
     pub fn toggle_idle(&mut self) {
@@ -245,39 +116,6 @@ impl App {
             self.active_saver = if name.is_empty() { "Random".to_string() } else { name.to_string() };
         }
         self.last_action = Some(Instant::now());
-    }
-
-    pub fn preview_saver(&mut self) {
-        let saver = if self.selected_saver_idx == 0 {
-            if self.screensavers.is_empty() {
-                "beams".to_string()
-            } else {
-                self.screensavers[0].clone()
-            }
-        } else {
-            self.screensavers[self.selected_saver_idx - 1].clone()
-        };
-
-        if !self.daemon_running {
-            self.toggle_daemon();
-        }
-
-        let mut started_via_dbus = false;
-        if self.daemon_running {
-            if self.client.is_none() {
-                self.refresh_state();
-            }
-            if let Some(ref client) = self.client
-                && client.preview(&saver).is_ok()
-            {
-                started_via_dbus = true;
-            }
-        }
-        if !started_via_dbus {
-            let _ = Command::new("idle-daemon")
-                .args(["run-plugin", &saver])
-                .status();
-        }
     }
 }
 

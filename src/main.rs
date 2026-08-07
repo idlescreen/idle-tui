@@ -2,7 +2,9 @@
 // Copyright 2026 IdleScreen
 
 mod app;
+mod helpers;
 mod ui;
+pub mod cosmic;
 
 use std::io;
 use std::time::{Duration, Instant};
