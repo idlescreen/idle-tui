@@ -1,3 +1,6 @@
+> 🌐 **Organization Website:** [idlescreen.github.io](https://idlescreen.github.io)
+> 
+
 # idle-tui
 
 Terminal UI client for IdleScreen. Talks to `idle-daemon` over D-Bus.
