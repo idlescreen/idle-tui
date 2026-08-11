@@ -1,33 +1,33 @@
-name: CI
+name: Standard CI
+
 on:
   push:
-    branches: [master]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [master]
+    branches: [ "master", "main" ]
+
 jobs:
-  check:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Checkout idle engine (path deps)
-        uses: actions/checkout@v4
-        with:
-          repository: idlescreen/idle
-          path: idle
-      - name: Install Rust
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          rustup component add rustfmt clippy
-          rustc --version
-          cargo --version
-      - name: System deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libdbus-1-dev pkg-config
-      - name: fmt
-        run: cargo fmt --all -- --check
-      - name: clippy
-        run: cargo clippy --all-targets -- -D warnings
-      - name: test
-        run: cargo test
+    - uses: actions/checkout@v4
+
+    - name: Install build deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cargo rustc \
+          libwayland-dev libxkbcommon-dev libudev-dev \
+          libdbus-1-dev pkg-config libssl-dev \
+          libfontconfig1-dev libfreetype6-dev
+
+    - name: cargo build
+      run: cargo build --workspace --all-targets
+
+    - name: cargo test
+      run: cargo test --workspace --all-targets
+
+    - name: cargo clippy
+      run: cargo clippy --workspace --all-targets -- -D warnings
+
+    - name: cargo fmt check
+      run: cargo fmt --all -- --check
