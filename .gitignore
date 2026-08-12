@@ -20,7 +20,6 @@ target/
 __pycache__/
 *.pyc
 # ==========================================
-Cargo.lock.bak
 /idle
 /idle/
 /target
