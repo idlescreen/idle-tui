@@ -214,7 +214,15 @@ mod tests {
 
     #[test]
     fn random_aliases_are_detected() {
-        for raw in ["", "random", "Random", "RANDOM", "shuffle", "Shuffle", "Random selection"] {
+        for raw in [
+            "",
+            "random",
+            "Random",
+            "RANDOM",
+            "shuffle",
+            "Shuffle",
+            "Random selection",
+        ] {
             assert!(is_random_saver(raw), "expected random for {raw:?}");
             assert_eq!(display_saver_name(raw), "Random");
         }

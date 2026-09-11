@@ -31,11 +31,25 @@ pub fn install_cosmic_applet() -> Result<(), String> {
     // unsigned package.
     let status = if has_dnf {
         Command::new("pkexec")
-            .args(["env", "IDLE_REQUIRE_MANIFEST_SIGNATURE=1", "dnf", "install", "-y", "idle-cosmic"])
+            .args([
+                "env",
+                "IDLE_REQUIRE_MANIFEST_SIGNATURE=1",
+                "dnf",
+                "install",
+                "-y",
+                "idle-cosmic",
+            ])
             .status()
     } else if has_apt {
         Command::new("pkexec")
-            .args(["env", "IDLE_REQUIRE_MANIFEST_SIGNATURE=1", "apt", "install", "-y", "idle-cosmic"])
+            .args([
+                "env",
+                "IDLE_REQUIRE_MANIFEST_SIGNATURE=1",
+                "apt",
+                "install",
+                "-y",
+                "idle-cosmic",
+            ])
             .status()
     } else {
         return Err("Error: No supported package manager (dnf/apt)".to_string());

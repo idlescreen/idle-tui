@@ -60,7 +60,9 @@ impl App {
     }
 
     fn refresh_from_daemon(&mut self) {
-        let Ok(client) = TranceClient::connect() else { return };
+        let Ok(client) = TranceClient::connect() else {
+            return;
+        };
         if let Ok(status) = client.get_status() {
             self.idle_enabled = status.idle_enabled;
             self.idle_timeout_mins = status.idle_timeout_mins;
