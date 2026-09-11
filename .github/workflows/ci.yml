@@ -37,6 +37,13 @@ jobs:
 
     - name: cargo clippy
       run: cargo clippy --workspace --all-targets -- -D warnings
+    - name: cargo audit (advisories)
+      run: |
+        curl -L --proto '=https' --tlsv1.2 -sSf \
+          https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        cargo binstall -y cargo-audit
+        cargo audit
 
     - name: cargo fmt check
       run: cargo fmt --all -- --check
