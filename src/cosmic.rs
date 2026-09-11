@@ -1,13 +1,11 @@
 use std::process::Command;
 
 pub fn is_cosmic_de() -> bool {
-    if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
-        if desktop.to_lowercase().contains("cosmic") {
-            return true;
-        }
-    }
-    if let Ok(session) = std::env::var("DESKTOP_SESSION") {
-        if session.to_lowercase().contains("cosmic") {
+    for var in ["XDG_CURRENT_DESKTOP", "DESKTOP_SESSION"] {
+        if std::env::var(var)
+            .map(|v| v.to_lowercase().contains("cosmic"))
+            .unwrap_or(false)
+        {
             return true;
         }
     }
