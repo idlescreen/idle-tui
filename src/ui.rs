@@ -89,7 +89,7 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
         .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
         .split(chunks[1]);
 
-    let mut settings_list = [
+    let mut settings_list = vec![
         format!(
             "Daemon Service:       {}",
             if app.daemon_running {
@@ -109,6 +109,9 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
             if app.show_fps_overlay { "ON" } else { "OFF" }
         ),
     ];
+    for (k, v) in &app.saver_params {
+        settings_list.push(format!("Saver param {k}:      {v}"));
+    }
 
     let mut settings_items = Vec::new();
     for (idx, text) in settings_list.iter_mut().enumerate() {
@@ -190,7 +193,7 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
             }
             ActivePane::Settings => {
                 format!(
-                    " [Tab] Pane | [Space/Enter] Toggle | [←/→] Timeout/Scale{cosmic_key_hint} | [q] Quit"
+                    " [Tab] Pane | [Space/Enter] Toggle | [←/→] Adjust{cosmic_key_hint} | [q] Quit"
                 )
             }
             ActivePane::Screensavers => {

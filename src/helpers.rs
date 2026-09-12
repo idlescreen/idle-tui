@@ -47,13 +47,16 @@ impl App {
 
         self.daemon_running = daemon_available();
         let live = self.daemon_running && self.refresh_from_daemon();
+        // Saver params are file-only — D-Bus status doesn't carry them, so
+        // they're loaded every refresh regardless of daemon state.
+        let f = crate::file_config::load();
+        self.saver_params = f.saver_params;
         if !live {
             // Daemon down OR connect/status failed: show on-disk settings,
             // not hardcoded defaults — otherwise it looks like an update
             // wiped the user's config (and an edit would persist them).
             self.client = None;
             self.screensavers = idle_runner::discovery::detect_screensavers();
-            let f = crate::file_config::load();
             self.idle_enabled = f.idle_enabled;
             self.idle_timeout_mins = f.idle_timeout_mins;
             self.show_fps_overlay = f.show_fps_overlay;

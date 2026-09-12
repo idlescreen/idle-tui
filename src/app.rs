@@ -28,6 +28,10 @@ pub struct App {
     pub mem_used_mb: u64,
     pub mem_total_mb: u64,
     pub inhibitors: Vec<(u32, String, String)>,
+    /// `[saver]`/`[saver.*]` params from config.yaml — the daemon passes
+    /// these to savers as `IDLE_SAVER_PARAM_*` env vars. Always file-sourced
+    /// (D-Bus status doesn't carry them).
+    pub saver_params: std::collections::BTreeMap<String, String>,
     pub tick_count: u64,
     pub cosmic_de_detected: bool,
     pub cosmic_applet_installed: bool,
@@ -55,6 +59,7 @@ impl App {
             mem_used_mb: 0,
             mem_total_mb: 0,
             inhibitors: Vec::new(),
+            saver_params: std::collections::BTreeMap::new(),
             tick_count: 0,
             cosmic_de_detected: crate::cosmic::is_cosmic_de(),
             cosmic_applet_installed: crate::cosmic::is_cosmic_applet_installed(),
@@ -118,6 +123,47 @@ impl App {
             let _ = client.set_show_fps_overlay(self.show_fps_overlay);
         } else {
             self.persist_offline("show_fps_overlay", &self.show_fps_overlay.to_string());
+        }
+        self.last_action = Some(Instant::now());
+    }
+
+    /// Settings pane rows: 5 fixed + one per saver param.
+    pub fn settings_row_count(&self) -> usize {
+        5 + self.saver_params.len()
+    }
+
+    /// Adjust the saver param at settings row `idx` (0-based within params).
+    /// Numeric params step by ±1 (ints) or ±0.05 (floats); non-numeric
+    /// params aren't adjustable from here — edit config.yaml directly.
+    /// Writes the config file directly: params are consumed by savers on the
+    /// next presentation, and the daemon hot-reloads the file.
+    pub fn adjust_param(&mut self, idx: usize, delta: f64) {
+        let Some((key, cur)) = self
+            .saver_params
+            .iter()
+            .nth(idx)
+            .map(|(k, v)| (k.clone(), v.clone()))
+        else {
+            return;
+        };
+        let new_val = if let Ok(i) = cur.parse::<i64>() {
+            (i + delta as i64).to_string()
+        } else if let Ok(f) = cur.parse::<f64>() {
+            format!("{:.2}", f + delta)
+        } else {
+            self.status_message = Some(format!(
+                "{key} is not numeric — edit config.yaml to change it"
+            ));
+            return;
+        };
+        match crate::file_config::write_saver_param(&key, &new_val) {
+            Ok(()) => {
+                self.saver_params.insert(key.clone(), new_val.clone());
+                self.status_message = Some(format!("{key}: {new_val} (next presentation)"));
+            }
+            Err(e) => {
+                self.status_message = Some(format!("Failed to write {key}: {e}"));
+            }
         }
         self.last_action = Some(Instant::now());
     }

@@ -88,7 +88,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                 KeyCode::Down => match app.active_pane {
                     ActivePane::Dashboard => {}
                     ActivePane::Settings => {
-                        if app.selected_setting_idx < 4 {
+                        if app.selected_setting_idx + 1 < app.settings_row_count() {
                             app.selected_setting_idx += 1;
                         }
                     }
@@ -103,6 +103,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                         match app.selected_setting_idx {
                             2 => app.adjust_timeout(-1),
                             3 => app.adjust_scale(-0.05),
+                            i if i >= 5 => app.adjust_param(i - 5, -0.05),
                             _ => {}
                         }
                     }
@@ -112,6 +113,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                         match app.selected_setting_idx {
                             2 => app.adjust_timeout(1),
                             3 => app.adjust_scale(0.05),
+                            i if i >= 5 => app.adjust_param(i - 5, 0.05),
                             _ => {}
                         }
                     }
@@ -124,6 +126,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, app: &mut App)
                         2 => app.adjust_timeout(5),
                         3 => app.adjust_scale(0.1),
                         4 => app.toggle_fps(),
+                        i if i >= 5 => app.adjust_param(i - 5, 0.1),
                         _ => {}
                     },
                     ActivePane::Screensavers => {

@@ -14,6 +14,9 @@ pub struct FileSettings {
     pub active_saver: Option<String>,
     /// `None` = auto (`null` on disk); callers display 1.0.
     pub render_scale: Option<f32>,
+    /// `[saver]`/`[saver.*]` params (`[saver.hearth] size` → `hearth.size`).
+    /// The daemon delivers these to savers as `IDLE_SAVER_PARAM_*` env vars.
+    pub saver_params: std::collections::BTreeMap<String, String>,
 }
 
 /// Config path: `IDLE_TUI_CONFIG_DIR` override first (tests/debug), then
@@ -57,14 +60,14 @@ pub fn load() -> FileSettings {
     let Some(content) = config_path().and_then(|p| std::fs::read_to_string(p).ok()) else {
         return s;
     };
-    let mut in_section = false;
+    let mut section = String::new();
     for line in content.lines() {
         let t = line.trim();
-        if t.starts_with('[') {
-            in_section = true;
+        if let Some(sec) = t.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            section = sec.to_string();
             continue;
         }
-        if in_section || t.is_empty() || t.starts_with('#') {
+        if t.is_empty() || t.starts_with('#') {
             continue;
         }
         // Accept `=` too — hand-edited files commonly use it and the daemon
@@ -73,7 +76,20 @@ pub fn load() -> FileSettings {
             continue;
         };
         let val = t[idx + 1..].trim().trim_matches('"').trim_matches('\'');
-        match t[..idx].trim() {
+        let key = t[..idx].trim();
+        if section == "saver" {
+            s.saver_params.insert(key.to_string(), val.to_string());
+            continue;
+        }
+        if let Some(name) = section.strip_prefix("saver.") {
+            s.saver_params
+                .insert(format!("{name}.{key}"), val.to_string());
+            continue;
+        }
+        if !section.is_empty() {
+            continue;
+        }
+        match key {
             "idle_timeout_mins" => {
                 if let Ok(n) = val.parse() {
                     s.idle_timeout_mins = n;
@@ -129,7 +145,74 @@ pub fn merge_field(existing: &str, key: &str, value: &str) -> String {
     body
 }
 
+/// Rewrite a saver param, preserving everything else. A key like
+/// `hearth.size` may live flat under `[saver]` or as `size` under
+/// `[saver.hearth]` — whichever form exists is rewritten in place (writing
+/// flat while a namespaced section exists would lose on parse, since the
+/// later section wins). New keys append under `[saver]` (created if
+/// absent), which parses identically.
+pub fn merge_saver_param(existing: &str, key: &str, value: &str) -> String {
+    let mut body = String::new();
+    let mut written = false;
+    let mut saw_saver = false;
+    let mut section = "";
+    for line in existing.lines() {
+        let t = line.trim();
+        if let Some(sec) = t.strip_prefix('[').and_then(|s| s.strip_suffix(']')) {
+            section = sec;
+            saw_saver |= sec == "saver";
+            body.push_str(line);
+            body.push('\n');
+            continue;
+        }
+        let resolved = t.find([':', '=']).and_then(|i| {
+            if t.starts_with('#') {
+                return None;
+            }
+            let k = t[..i].trim();
+            match section.strip_prefix("saver") {
+                Some("") => Some((k, k.to_string())),
+                Some(rest) => rest
+                    .strip_prefix('.')
+                    .map(|name| (k, format!("{name}.{k}"))),
+                None => None,
+            }
+        });
+        if !written && resolved.as_ref().is_some_and(|(_, r)| r.as_str() == key) {
+            // Emit the section-local key so `[saver.hearth] size` stays
+            // `size` — writing `hearth.size` here would parse as
+            // `hearth.hearth.size`.
+            let inner = resolved.unwrap().0;
+            body.push_str(&format!("{inner}: {value}\n"));
+            written = true;
+            continue;
+        }
+        body.push_str(line);
+        body.push('\n');
+    }
+    if !written {
+        if !saw_saver {
+            body.push_str("\n[saver]\n");
+        }
+        body.push_str(&format!("{key}: {value}\n"));
+    }
+    body
+}
+
+/// Lock + read-merge-write for `merge_saver_param` (same pattern as
+/// [`write_field`]).
+pub fn write_saver_param(key: &str, value: &str) -> std::io::Result<()> {
+    write_merged(|existing| merge_saver_param(existing, key, value))
+}
+
 pub fn write_field(key: &str, value: &str) -> std::io::Result<()> {
+    write_merged(|existing| merge_field(existing, key, value))
+}
+
+/// Shared lock + read-modify-write + atomic-rename plumbing for the merge
+/// functions above. Serialized against the daemon/applet via the sidecar
+/// `config.yaml.lock`.
+fn write_merged(merge: impl FnOnce(&str) -> String) -> std::io::Result<()> {
     let Some(path) = config_path() else {
         return Err(std::io::Error::new(
             std::io::ErrorKind::NotFound,
@@ -139,7 +222,6 @@ pub fn write_field(key: &str, value: &str) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    // Serialize read-modify-write against other writers (daemon, applet).
     let lock = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
@@ -148,7 +230,7 @@ pub fn write_field(key: &str, value: &str) -> std::io::Result<()> {
     lock.lock()?;
     let existing = std::fs::read_to_string(&path).unwrap_or_default();
     let tmp = path.with_file_name(format!("config.yaml.{}.tmp", std::process::id()));
-    std::fs::write(&tmp, merge_field(&existing, key, value))?;
+    std::fs::write(&tmp, merge(&existing))?;
     std::fs::rename(&tmp, &path).inspect_err(|_| {
         let _ = std::fs::remove_file(&tmp);
     })
