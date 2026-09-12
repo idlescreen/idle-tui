@@ -46,13 +46,13 @@ impl App {
         }
 
         self.daemon_running = daemon_available();
-        if self.daemon_running {
-            self.refresh_from_daemon();
-        } else {
+        let live = self.daemon_running && self.refresh_from_daemon();
+        if !live {
+            // Daemon down OR connect/status failed: show on-disk settings,
+            // not hardcoded defaults — otherwise it looks like an update
+            // wiped the user's config (and an edit would persist them).
             self.client = None;
             self.screensavers = idle_runner::discovery::detect_screensavers();
-            // Daemon down: show on-disk settings, not hardcoded defaults —
-            // otherwise it looks like an update wiped the user's config.
             let f = crate::file_config::load();
             self.idle_enabled = f.idle_enabled;
             self.idle_timeout_mins = f.idle_timeout_mins;
@@ -67,28 +67,33 @@ impl App {
         }
     }
 
-    fn refresh_from_daemon(&mut self) {
+    /// Populate from the daemon. Returns false when the daemon is not
+    /// actually usable (connect or status failed) so the caller can fall
+    /// back to on-disk values instead of displaying built-in defaults.
+    fn refresh_from_daemon(&mut self) -> bool {
         let Ok(client) = TranceClient::connect() else {
-            return;
+            return false;
         };
-        if let Ok(status) = client.get_status() {
-            self.idle_enabled = status.idle_enabled;
-            self.idle_timeout_mins = status.idle_timeout_mins;
-            // Normalize empty / random / shuffle to "Random" for UI starring.
-            self.active_saver = if crate::ui::is_random_saver(&status.active_saver) {
-                "Random".to_string()
-            } else {
-                status.active_saver
-            };
-            self.show_fps_overlay = status.show_fps_overlay;
-            self.render_scale = status.render_scale.parse::<f32>().unwrap_or(1.0);
-            self.on_battery = status.inhibited;
-        }
+        let Ok(status) = client.get_status() else {
+            return false;
+        };
+        self.idle_enabled = status.idle_enabled;
+        self.idle_timeout_mins = status.idle_timeout_mins;
+        // Normalize empty / random / shuffle to "Random" for UI starring.
+        self.active_saver = if crate::ui::is_random_saver(&status.active_saver) {
+            "Random".to_string()
+        } else {
+            status.active_saver
+        };
+        self.show_fps_overlay = status.show_fps_overlay;
+        self.render_scale = status.render_scale.parse::<f32>().unwrap_or(1.0);
+        self.on_battery = status.inhibited;
         if let Ok(savers) = client.list_savers() {
             self.screensavers = savers;
         }
         self.inhibitors = client.list_inhibitors().unwrap_or_default();
         self.client = Some(client);
+        true
     }
 
     fn refresh_sys_info(&mut self) {

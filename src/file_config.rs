@@ -67,7 +67,11 @@ pub fn load() -> FileSettings {
         if in_section || t.is_empty() || t.starts_with('#') {
             continue;
         }
-        let Some(idx) = t.find(':') else { continue };
+        // Accept `=` too — hand-edited files commonly use it and the daemon
+        // applies it, so ignoring it here would show stale defaults.
+        let Some(idx) = t.find([':', '=']) else {
+            continue;
+        };
         let val = t[idx + 1..].trim().trim_matches('"').trim_matches('\'');
         match t[..idx].trim() {
             "idle_timeout_mins" => {
@@ -107,7 +111,7 @@ pub fn merge_field(existing: &str, key: &str, value: &str) -> String {
         if !in_section
             && !written
             && !t.starts_with('#')
-            && t.find(':').is_some_and(|i| t[..i].trim() == key)
+            && t.find([':', '=']).is_some_and(|i| t[..i].trim() == key)
         {
             body.push_str(&format!("{key}: {value}\n"));
             written = true;
