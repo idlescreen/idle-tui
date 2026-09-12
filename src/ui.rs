@@ -110,7 +110,7 @@ pub fn render_ui(f: &mut ratatui::Frame, app: &mut App) {
         ),
     ];
     for (k, v) in &app.saver_params {
-        settings_list.push(format!("Saver param {k}:      {v}"));
+        settings_list.push(format!("{:<22}{v}", format!("{k}:")));
     }
 
     let mut settings_items = Vec::new();
