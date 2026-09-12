@@ -65,15 +65,26 @@ impl App {
         app
     }
 
+    /// Daemon offline: persist a key straight to config.yaml so the change
+    /// is real, not a pretend edit that evaporates on the next read.
+    fn persist_offline(&mut self, key: &str, value: &str) {
+        self.status_message = Some(match crate::file_config::write_field(key, value) {
+            Ok(()) => format!("Saved to config file (daemon offline): {key} = {value}"),
+            Err(e) => format!("Daemon offline and config write failed: {e}"),
+        });
+    }
+
     pub fn toggle_idle(&mut self) {
-        if let Some(ref client) = self.client {
-            if self.idle_enabled {
-                let _ = client.disable();
-            } else {
-                let _ = client.enable();
-            }
-        }
         self.idle_enabled = !self.idle_enabled;
+        if let Some(ref client) = self.client {
+            let _ = if self.idle_enabled {
+                client.enable()
+            } else {
+                client.disable()
+            };
+        } else {
+            self.persist_offline("idle_enabled", &self.idle_enabled.to_string());
+        }
         self.last_action = Some(Instant::now());
     }
 
@@ -83,6 +94,8 @@ impl App {
         self.idle_timeout_mins = val as u32;
         if let Some(ref client) = self.client {
             let _ = client.set_timeout(self.idle_timeout_mins);
+        } else {
+            self.persist_offline("idle_timeout_mins", &self.idle_timeout_mins.to_string());
         }
         self.last_action = Some(Instant::now());
     }
@@ -93,15 +106,19 @@ impl App {
         self.render_scale = val;
         if let Some(ref client) = self.client {
             let _ = client.set_render_scale(self.render_scale);
+        } else {
+            self.persist_offline("render_scale", &self.render_scale.to_string());
         }
         self.last_action = Some(Instant::now());
     }
 
     pub fn toggle_fps(&mut self) {
-        if let Some(ref client) = self.client {
-            let _ = client.set_show_fps_overlay(!self.show_fps_overlay);
-        }
         self.show_fps_overlay = !self.show_fps_overlay;
+        if let Some(ref client) = self.client {
+            let _ = client.set_show_fps_overlay(self.show_fps_overlay);
+        } else {
+            self.persist_offline("show_fps_overlay", &self.show_fps_overlay.to_string());
+        }
         self.last_action = Some(Instant::now());
     }
 
@@ -142,8 +159,12 @@ impl App {
                 }
             }
         } else {
-            self.status_message =
-                Some("Daemon not running — start it (Settings → Daemon) first".into());
+            let file_val = if name.is_empty() {
+                "none"
+            } else {
+                name.as_str()
+            };
+            self.persist_offline("active_saver", &format!("\"{file_val}\""));
         }
         self.last_action = Some(Instant::now());
     }

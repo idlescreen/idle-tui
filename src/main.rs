@@ -3,6 +3,7 @@
 
 mod app;
 pub mod cosmic;
+mod file_config;
 mod helpers;
 mod ui;
 

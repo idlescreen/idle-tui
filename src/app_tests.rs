@@ -3,8 +3,17 @@
 
 use super::*;
 
+/// Redirect config writes to a scratch dir so offline-path edits in tests
+/// never touch the developer's real config.yaml.
+fn use_scratch_config() {
+    let dir = std::env::temp_dir().join(format!("idle-tui-apptest-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    unsafe { std::env::set_var("IDLE_TUI_CONFIG_DIR", &dir) };
+}
+
 #[test]
 fn test_app_initial_state() {
+    use_scratch_config();
     let app = App::new();
     assert_eq!(app.active_pane, ActivePane::Dashboard);
     assert_eq!(app.selected_setting_idx, 0);
@@ -15,6 +24,7 @@ fn test_app_initial_state() {
 
 #[test]
 fn test_adjust_timeout_clamping() {
+    use_scratch_config();
     let mut app = App::new();
     app.idle_timeout_mins = 10;
     app.adjust_timeout(-5);
@@ -31,6 +41,7 @@ fn test_adjust_timeout_clamping() {
 
 #[test]
 fn test_adjust_scale_clamping() {
+    use_scratch_config();
     let mut app = App::new();
     app.render_scale = 0.5;
     app.adjust_scale(0.2);
@@ -47,6 +58,7 @@ fn test_adjust_scale_clamping() {
 
 #[test]
 fn test_active_pane_toggle() {
+    use_scratch_config();
     let mut app = App::new();
     assert_eq!(app.active_pane, ActivePane::Dashboard);
 

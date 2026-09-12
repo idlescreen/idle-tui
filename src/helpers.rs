@@ -51,6 +51,14 @@ impl App {
         } else {
             self.client = None;
             self.screensavers = idle_runner::discovery::detect_screensavers();
+            // Daemon down: show on-disk settings, not hardcoded defaults —
+            // otherwise it looks like an update wiped the user's config.
+            let f = crate::file_config::load();
+            self.idle_enabled = f.idle_enabled;
+            self.idle_timeout_mins = f.idle_timeout_mins;
+            self.show_fps_overlay = f.show_fps_overlay;
+            self.render_scale = f.render_scale.unwrap_or(1.0);
+            self.active_saver = f.active_saver.unwrap_or_else(|| "Random".to_string());
         }
 
         self.refresh_sys_info();
