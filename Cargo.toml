@@ -5,7 +5,7 @@ version = "3.2.4"
 edition = "2024"
 description = "Optional TUI client for IdleScreen (idle-tui)"
 license = "Apache-2.0"
-repository = "https://github.com/idlescreen/idle-tui"
+repository = "https://github.com/idlescreen/runtime-tui"
 readme = "README.md"
 publish = false
 
@@ -17,9 +17,9 @@ path = "src/main.rs"
 crossterm = "0.29"
 ratatui = "0.30"
 anyhow = "1"
-# Local path dep: CI checks out idlescreen/idle here; local may be a symlink to ../idle
-idle-dbus = { path = "idle/crates/idle-dbus" }
-idle-runner = { path = "idle/idle-runner" }
+# Local path dep: CI checks out idlescreen/runtime here; local may be a symlink to ../runtime
+idle-dbus = { path = "runtime/crates/idle-dbus" }
+idle-runner = { path = "runtime/idle-runner" }
 
 [package.metadata.deb]
 name = "idle-tui"
