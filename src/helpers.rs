@@ -110,17 +110,9 @@ impl App {
 
     pub fn toggle_daemon(&mut self) {
         if self.daemon_running {
-            let _ = Command::new("systemctl")
-                .args(["--user", "stop", "idle-daemon.service"])
-                .status();
+            let _ = idle_dbus::service::stop_daemon_service();
         } else {
-            let sys_status = Command::new("systemctl")
-                .args(["--user", "enable", "--now", "idle-daemon.service"])
-                .status();
-            let success = sys_status.map(|s| s.success()).unwrap_or(false);
-            if !success {
-                let _ = Command::new("idle-daemon").arg("daemon").spawn();
-            }
+            let _ = idle_dbus::service::start_daemon_service();
         }
         std::thread::sleep(Duration::from_millis(350));
         self.refresh_state();
